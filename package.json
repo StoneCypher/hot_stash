@@ -1,18 +1,17 @@
 {
   "name": "hot_stash",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "terrible live-on-disk cacher",
   "main": "index.js",
   "scripts": {
     "clean": "rimraf build -f && mkdir build && mkdir build/testrun && cp -r src/testdata/initcache/ build/testrun/",
     "babel": "babel src/js -d build/",
-    "rename": "node -e \"require('fs').renameSync('./build/hot_stash.js', './build/hot_stash.es5.js');\"",
-    "make": "npm run babel && npm run rename",
-    "build": "npm run make && npm run test",
-    "flow": "flow",
+    "make": "tsc",
+    "build": "npm run clean && npm run make && npm run test",
     "eslint": "eslint src/js/*.js",
     "nyc-ava": "nyc ava src/js/tests/*.js",
-    "test": "npm run eslint && npm run flow && npm run nyc-ava"
+    "test": "npm run eslint && npm run nyc-ava",
+    "doc": "typedoc --out docs/ src/js/hot_stash.ts"
   },
   "repository": {
     "type": "git",
@@ -25,6 +24,7 @@
   },
   "homepage": "https://github.com/StoneCypher/hot_stash#readme",
   "devDependencies": {
+    "@types/glob": "^5.0.33",
     "ava": "^0.23.0",
     "ava-spec": "^1.1.0",
     "babel-cli": "^6.26.0",
@@ -45,7 +45,12 @@
     "eslint-plugin-unicorn": "^2.1.2",
     "flow": "^0.2.3",
     "flow-bin": "^0.58.0",
+    "glob": "^7.1.2",
     "nyc": "^11.3.0",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "typedoc": "^0.9.0"
+  },
+  "dependencies": {
+    "@types/node": "^8.0.50"
   }
 }

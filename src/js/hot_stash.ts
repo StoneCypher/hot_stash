@@ -17,6 +17,9 @@
  *  state, and either returns it or creates a new one, stores it, then returns
  *  that.  This makes no effort to remember previous disk state (yet.)
  *
+ *  For the most part, it is expected that people will work with `has_cache/3`,
+ *  `get_cache/3`, and `get_or_gen_set/4`
+ *
  *  All functions other than `make_cacher/2` start with `path` and `name` in
  *  their arglist.  Path is where the cacher is looking on disk; name is the
  *  name that the cacher is using as an instance name (two instances should not
@@ -35,11 +38,24 @@
  *  store JSON.
  */
 
-import type { GetResult, HotStashCacher } from './types.js';
-
 import { sep }                                     from 'path';
 import { sync as globSync }                        from 'glob';
 import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+
+
+
+
+
+interface GetSuccess { success: true;  item: string; value: string; };
+interface GetFailure { success: false; item: string; value: string; };
+
+type      GetResult  = GetSuccess | GetFailure;
+
+
+
+
+
+let build_count = 0; // prevents the same filename from being written because of a nonincremented clock
 
 
 
@@ -50,15 +66,21 @@ import { readFileSync, writeFileSync, unlinkSync } from 'fs';
  *  Base of make_fname and make_fname_glob, which are almost the same thing
  */
 
-const _make_fname_base: Function = (uPath: string, uName: string, uItem: string, center: string): string => {
+const _make_fname_base: Function = (uPath: string, uName: string, uItem: string, center: string, count: number | string): string => {
 
   let final_path : string = '';
 
-  if      (uPath === '')                       {}                             // eslint-disable-line no-empty
-  else if (uPath[final_path.length-1] !== '/') { final_path = uPath + sep; }
-  else                                         { final_path = uPath; }
+// if      ([undefined, null, ''].includes(uPath)) { throw new Error('must specify a path'); }  // typescript faults this as string not having includes
 
-  return `${final_path}${uName}___${uItem}___${center}.hot_stash`;
+  if      (uPath === null)                { throw new Error('must specify a path'); }
+  else if (uPath === undefined)           { throw new Error('must specify a path'); }
+  else if (uPath === '')                  { throw new Error('must specify a path'); }
+
+
+  else if (uPath[uPath.length-1] !== '/') { final_path = uPath + sep; }
+  else                                    { final_path = uPath; }
+
+  return `${final_path}${uName}___${uItem}___${center}___${count}.hot_stash`;
 
 };
 
@@ -78,7 +100,7 @@ const make_fname: Function = (uPath: string, uName: string, uItem: string): stri
   let ts: string = (new Date()).getTime()
                                .toString();
 
-  return _make_fname_base(uPath, uName, uItem, ts);
+  return _make_fname_base(uPath, uName, uItem, ts, build_count++);
 
 };
 
@@ -105,7 +127,7 @@ const make_fname: Function = (uPath: string, uName: string, uItem: string): stri
 
 const make_fname_glob: Function = (uPath: string, uName: string, uItem: string): string =>
 
-  _make_fname_base(uPath, uName, uItem, '*');  // * as the glob wildcard, where the timestamp would be, y'see
+  _make_fname_base(uPath, uName, uItem, '*', '*');  // * as the glob wildcard, where the timestamp would be, y'see
 
 
 
@@ -127,7 +149,7 @@ const cache_contents_for: Function = (uPath: string, uName: string, uItem: strin
 
 /***
  *
- *  Looks up the on-disk cache for a given item, under a given path/name.
+ *  Looks up the on-disk cache for a given item, under a given path/name, and returns the most recent entry.
  */
 
 const best_cache_match_for: Function = (uPath: string, uName: string, uItem: string): string => {
@@ -149,9 +171,14 @@ const best_cache_match_for: Function = (uPath: string, uName: string, uItem: str
 
 
 
-const _as_getresult(item: string, value: any): GetResult =>
+/***
+ *
+ *  An internal descriptive method.  Do not use externally, please.
+ */
 
-    ({ item, value });
+const _as_get_success = (item: string, value: any): GetSuccess =>
+
+    ({ success: true, item, value });
 
 
 
@@ -160,11 +187,17 @@ const _as_getresult(item: string, value: any): GetResult =>
 /***
  *
  *  Looks up the on-disk cache for a given item, under a given path/name.
+ *
+ *  @param uPath {string} - where on disk the cache is stored
+ *  @param uName {string} - the name of the logger (not the item!)
+ *  @param uItem {string} - the name of the thing being stored at the time
+ *
+ *  @returns {GetResult} - The gotten cache, which may be new
  */
 
 const get_cache: Function = (uPath: string, uName: string, uItem: string): GetResult =>
 
-  _as_getresult(uItem, JSON.parse(readFileSync(best_cache_match_for(uPath, uName, uItem), 'utf8'));
+  _as_get_success(uItem, JSON.parse(readFileSync(best_cache_match_for(uPath, uName, uItem), 'utf8')));
 
 
 
@@ -228,6 +261,17 @@ const del_file_list: Function = (uFileList: Array<string>) =>
 
 
 
+/***
+ *
+ *  Deletes all applicable entries from `uName` cache in `uPath`
+ *
+ *  @param uPath {string} - where on disk the cache is stored
+ *  @param uName {string} - the name of the logger (not the item!)
+ *  @param uItem {string} - the name of the thing being stored at the time
+ *
+ *  @returns {void}
+ */
+
 const del_cache: Function = (uPath: string, uName: string, uItem: string) =>
 
   del_file_list( cache_contents_for(uPath, uName, uItem) );
@@ -240,21 +284,54 @@ const del_cache: Function = (uPath: string, uName: string, uItem: string) =>
  *
  *  Checks the on-disk cache.  If there's something, return that.  If not, call
  *  maker, store the result, and use that instead.
+ *
+ *  @param path {string} - where on disk the cache is stored
+ *  @param name {string} - the name of the logger (not the item!)
+ *  @param item {string} - the name of the thing being stored at the time
+ *  @param maker {function} - the function that will be called to create this cached item if not present
+ *
+ *  @returns {GetResult} - The gotten cache, which may be new
  */
 
 const get_or_gen_set: Function = (path: string, name: string, item: string, maker: Function): GetResult => {
 
   if (has_cache(path, name, item)) {
 
-    return get_cache(path, name, item)
+    return get_cache(path, name, item);
 
   } else {
 
-  	const made = maker();
+    const made = maker();
     set_cache(path, name, item, made);
-    return _as_getresult(item, made);
+    return _as_get_success(item, made);
 
   }
+
+}
+
+
+
+
+
+/***
+ *
+ *  Always passes data to disk.  Does not remove old stores; allows a user to
+ *  measure over time whether the cached items are actually stable.  Keeps the
+ *  `get_or_gen_set` API for easy swap in when ready.
+ *
+ *  @param path {string} - where on disk the cache is stored
+ *  @param name {string} - the name of the logger (not the item!)
+ *  @param item {string} - the name of the thing being stored at the time
+ *  @param maker {function} - the function that will be called to create this cached item if not present
+ *
+ *  @returns {GetResult} - The gotten cache, which may be new
+ */
+
+const logging_passthrough: Function = (path: string, name: string, item: string, maker: Function): GetResult => {
+
+  const made = maker();
+  set_keep_cache(path, name, item, made);
+  return _as_get_success(item, made);
 
 }
 
@@ -268,22 +345,25 @@ const get_or_gen_set: Function = (path: string, name: string, item: string, make
  *  the name constantly.  This offers no required functionality and you're
  *  welcome to ditch if it isn't convenient.
  *
- *  @param path {string} - where on disk the cache is stored
- *  @param name {string} - the name of the logger (not the item!)
+ *  @param uPath {string} - where on disk the cache is stored
+ *  @param uName {string} - the name of the logger (not the item!)
  *
- *  @returns {object} Utility object with path and name partially applied from the closure
+ *  @returns {object} - Utility object with path and name partially applied from the closure
  */
 
-const make_cacher: Function = (path: string, name: string): HotStashCacher => ({
+/*
+const make_cacher: Function = (uPath: string, uName: string) => ({
 
-  has_cache      : (item: string)                  : boolean   => has_cache(path, name, item),
-  set_cache      : (item: string, value: any)      : GetResult => set_cache(path, name, item, value),           // eslint-disable-line flowtype/no-weak-types
-  get_cache      : (item: string)                  : GetResult => get_cache(path, name, item),
-  del_cache      : (item: string)                  : GetResult => del_cache(path, name, item),
-  get_or_gen_set : (item: string, maker: Function) : GetResult => get_or_gen_set(path, name, item, maker)
+  has_cache      : (item: string)                  : boolean   => has_cache(uPath, uName, item),
+  set_cache      : (item: string, value: any)      : GetResult => set_cache(uPath, uName, item, value),           // eslint-disable-line flowtype/no-weak-types
+  get_cache      : (item: string)                  : GetResult => get_cache(uPath, uName, item),
+  del_cache      : (item: string)                  : GetResult => del_cache(uPath, uName, item),
+  get_or_gen_set : (item: string, maker: Function) : GetResult => get_or_gen_set(uPath, uName, item, maker)
+
+  // update this list
 
 });
-
+*/
 
 
 
@@ -291,16 +371,25 @@ const make_cacher: Function = (path: string, name: string): HotStashCacher => ({
 export {
 
   make_fname,
+    make_fname_glob,
+
   cache_contents_for,
+    best_cache_match_for,
 
   has_cache,
 
   set_cache,
     set_keep_cache,
 
+  del_cache,
+
   get_cache,
-    get_or_make_and_set,
+    get_or_gen_set,
+
+  logging_passthrough
+/*
+    ,
 
   make_cacher
-
+*/
 };

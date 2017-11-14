@@ -3,9 +3,7 @@
 
 import { describe } from 'ava-spec';
 
-const hot_stash = require('../../../build/hot_stash.es5.js');
-
-const test_tgt_dir = '../../../build/testrun'
+const hot_stash = require('../../../build/hot_stash.js');
 
 
 
