@@ -3,12 +3,6 @@
 
 
 
-// Todo:
-//
-// 1. Convert to TypeScript (sorry, just don't know it yet)
-
-
-
 /***
  *
  *  Generic cacher
@@ -157,7 +151,7 @@ const best_cache_match_for: Function = (uPath: string, uName: string, uItem: str
   const candidates: Array<string> = cache_contents_for(uPath, uName, uItem);
 
   if (candidates.length === 0) {
-  	throw new Error(`'no best cache match - no cache entries for '${uPath}' '${uName}' '${uItem}'`);
+    throw new Error(`'no best cache match - no cache entries for '${uPath}' '${uName}' '${uItem}'`);
   }
 
   // unix microtimes Just Sort (tm); last is latest
@@ -221,6 +215,8 @@ const set_keep_cache: Function = (uPath: string, uName: string, uItem: string, u
   } catch (e) {
     throw new TypeError(`Could not convert 'uValue' to JSON string - ${e}`);
   }
+
+  console.log(`  Writing to ${fname}`);
 
   try {
     writeFileSync(fname, val, 'utf8');
@@ -301,7 +297,7 @@ const get_or_gen_set: Function = (path: string, name: string, item: string, make
 
   } else {
 
-    const made = maker();
+    const made = await maker();
     set_cache(path, name, item, made);
     return _as_get_success(item, made);
 
@@ -327,43 +323,16 @@ const get_or_gen_set: Function = (path: string, name: string, item: string, make
  *  @returns {GetResult} - The gotten cache, which may be new
  */
 
-const logging_passthrough: Function = (path: string, name: string, item: string, maker: Function): GetResult => {
 
-  const made = maker();
+
+async function logging_passthrough(path: string, name: string, item: string, maker: Function): Promise<GetResult> {
+
+  const made = await maker();
   set_keep_cache(path, name, item, made);
   return _as_get_success(item, made);
 
 }
 
-
-
-
-
-/***
- *
- *  This is just a voluntary convenience to let you ditch managing the path and
- *  the name constantly.  This offers no required functionality and you're
- *  welcome to ditch if it isn't convenient.
- *
- *  @param uPath {string} - where on disk the cache is stored
- *  @param uName {string} - the name of the logger (not the item!)
- *
- *  @returns {object} - Utility object with path and name partially applied from the closure
- */
-
-/*
-const make_cacher: Function = (uPath: string, uName: string) => ({
-
-  has_cache      : (item: string)                  : boolean   => has_cache(uPath, uName, item),
-  set_cache      : (item: string, value: any)      : GetResult => set_cache(uPath, uName, item, value),           // eslint-disable-line flowtype/no-weak-types
-  get_cache      : (item: string)                  : GetResult => get_cache(uPath, uName, item),
-  del_cache      : (item: string)                  : GetResult => del_cache(uPath, uName, item),
-  get_or_gen_set : (item: string, maker: Function) : GetResult => get_or_gen_set(uPath, uName, item, maker)
-
-  // update this list
-
-});
-*/
 
 
 
@@ -387,9 +356,6 @@ export {
     get_or_gen_set,
 
   logging_passthrough
-/*
-    ,
 
-  make_cacher
-*/
 };
+

@@ -1,6 +1,6 @@
 {
   "name": "hot_stash",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "terrible live-on-disk cacher",
   "main": "index.js",
   "scripts": {
