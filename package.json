@@ -1,6 +1,6 @@
 {
   "name": "hot_stash",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "terrible live-on-disk cacher",
   "main": "index.js",
   "scripts": {
@@ -35,6 +35,7 @@
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.24.1",
+    "coveralls": "^3.0.2",
     "eslint": "^4.18.0",
     "eslint-config-smyte": "^1.15.7",
     "eslint-config-stonecypher": "^1.15.7",
