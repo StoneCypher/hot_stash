@@ -1,6 +1,6 @@
 {
 
-  "parser"  : "babel-eslint",
+  "parser"  : "@typescript-eslint/parser",
   "plugins" : [ ],
   "env"     : { "es6": true, "commonjs": true },
 

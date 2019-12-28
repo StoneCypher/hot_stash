@@ -6,7 +6,6 @@
   "scripts": {
     "o_clean": "rimraf build -f && mkdir build && cd build && mkdir testrun && cd .. && cp -r src/testdata/initcache/ build/testrun/",
     "clean": "rimraf build -f && mkdir build && cd build && mkdir testrun && cd ..",
-    "babel": "babel src/js -d build/",
     "make": "tsc",
     "build": "npm run clean && npm run make && npm run test",
     "minify": "uglifyjs ./build/jssm.es5.cjs.js -o ./build/jssm.es5.cjs.min.js --compress",
@@ -27,16 +26,13 @@
   "homepage": "https://github.com/StoneCypher/hot_stash#readme",
   "devDependencies": {
     "@types/glob": "^5.0.35",
-    "@types/node": "^9.4.6",
+    "@types/node": "^13.1.1",
+    "@typescript-eslint/eslint-plugin": "^2.13.0",
+    "@typescript-eslint/parser": "^2.13.0",
     "ava": "^0.25.0",
     "ava-spec": "^1.1.1",
-    "babel-cli": "^6.26.0",
-    "babel-eslint": "^8.2.1",
-    "babel-plugin-transform-flow-strip-types": "^6.22.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-react": "^6.24.1",
     "coveralls": "^3.0.2",
-    "eslint": "^4.18.0",
+    "eslint": "^4.19.1",
     "eslint-config-smyte": "^1.15.7",
     "eslint-config-stonecypher": "^1.15.7",
     "eslint-plugin-ava": "^4.5.1",
@@ -51,7 +47,8 @@
     "glob": "^7.1.2",
     "nyc": "^11.5.0",
     "rimraf": "^2.6.2",
-    "typedoc": "^0.10.0"
+    "typedoc": "^0.10.0",
+    "typescript": "^3.7.4"
   },
   "dependencies": {}
 }
