@@ -1,14 +1,4 @@
 
-// @flow
-
-
-
-// Todo:
-//
-// 1. Convert to TypeScript (sorry, just don't know it yet)
-
-
-
 /***
  *
  *  Generic cacher
@@ -42,14 +32,7 @@ import { sep }                                     from 'path';
 import { sync as globSync }                        from 'glob';
 import { readFileSync, writeFileSync, unlinkSync } from 'fs';
 
-
-
-
-
-interface GetSuccess { success: true;  item: string; value: string; };
-interface GetFailure { success: false; item: string; value: string; };
-
-type      GetResult  = GetSuccess | GetFailure;
+import { GetSuccess, GetFailure, GetResult }       from './types';
 
 
 

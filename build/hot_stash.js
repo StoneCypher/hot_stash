@@ -1,9 +1,4 @@
 "use strict";
-// @flow
-Object.defineProperty(exports, "__esModule", { value: true });
-// Todo:
-//
-// 1. Convert to TypeScript (sorry, just don't know it yet)
 /***
  *
  *  Generic cacher
@@ -32,11 +27,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *  Because of its mechanism of storage, this cacher is currently only able to
  *  store JSON.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
 var path_1 = require("path");
 var glob_1 = require("glob");
 var fs_1 = require("fs");
-;
-;
 var build_count = 0; // prevents the same filename from being written because of a nonincremented clock
 /***
  *

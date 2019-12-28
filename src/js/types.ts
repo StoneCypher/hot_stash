@@ -1,8 +1,10 @@
 
 // @flow
 
-type GetSuccess = { item: string, value: string };
-type GetResult  = GetSuccess | false;
+interface GetSuccess { success: true;  item: string; value: string; };
+interface GetFailure { success: false; item: string; value: string; };
+
+type      GetResult  = GetSuccess | GetFailure;
 
 type HotStashCacher = {
 
@@ -18,4 +20,4 @@ type HotStashCacher = {
 
 
 
-export { GetResult, GetSuccess, HotStashCacher };
+export { GetResult, GetSuccess, GetFailure, HotStashCacher };
