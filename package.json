@@ -45,7 +45,7 @@
     "eslint-plugin-unicorn": "^4.0.2",
     "flow": "^0.2.3",
     "glob": "^7.1.2",
-    "nyc": "^11.5.0",
+    "nyc": "^15.1.0",
     "rimraf": "^2.6.2",
     "typedoc": "^0.15.6",
     "typescript": "^3.7.4"
