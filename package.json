@@ -32,7 +32,7 @@
     "ava": "^5.1.0",
     "ava-spec": "^1.1.1",
     "coveralls": "^3.0.2",
-    "eslint": "^4.19.1",
+    "eslint": "^8.32.0",
     "eslint-config-smyte": "^1.15.7",
     "eslint-config-stonecypher": "^1.15.7",
     "eslint-plugin-ava": "^4.5.1",
